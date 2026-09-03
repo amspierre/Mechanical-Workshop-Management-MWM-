@@ -39,32 +39,42 @@
           aria-label="Pin sidebar open"
         >
           <!-- modern inline SVG list icon (inherits currentColor) -->
-          <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path fill-rule="evenodd" d="M2.5 12.5a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/>
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M2.5 12.5a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"
+            />
           </svg>
         </button>
 
-        <ul class="nav nav-pills flex-column sidebar-nav">
+          <ul class="nav nav-pills flex-column sidebar-nav">
           <li class="nav-item">
-            <a href="#" class="nav-link active">
+            <a href="#" class="nav-link active" data-target="service-orders">
               <i class="bi bi-wrench-adjustable"></i>
               <span class="label">Service Orders</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="#" class="nav-link" data-target="vehicles">
               <i class="bi bi-car-front"></i>
               <span class="label">Vehicles</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="#" class="nav-link" data-target="finance">
               <i class="bi bi-cash-coin"></i>
               <span class="label">Finance</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="#" class="nav-link" data-target="clients">
               <i class="bi bi-people"></i>
               <span class="label">Clients / Staff</span>
             </a>
@@ -92,55 +102,218 @@
             aria-controls="mobileSidebar"
             aria-label="Open menu"
           >
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path fill-rule="evenodd" d="M2.5 12.5a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M2.5 12.5a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"
+              />
             </svg>
           </button>
         </nav>
 
-        <div class="content"></div>
+        <h2></h2>
+        <div class="content">
+          <div id="service-orders">
+            <!-- Summary cards: 4 per row on large, 2 per row on small -->
+            <div class="row g-3 mb-4 summary-grid">
+              <div class="col-6 col-lg-3">
+                <div class="card summary-card p-3 text-center">
+                  <div class="small text-muted">Open orders</div>
+                  <div class="display-4 fw-bold my-2">24</div>
+                  <div class="small text-muted">Today</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-3">
+                <div class="card summary-card p-3 text-center">
+                  <div class="small text-muted">Vehicles</div>
+                  <div class="display-4 fw-bold my-2">128</div>
+                  <div class="small text-muted">Total</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-3">
+                <div class="card summary-card p-3 text-center">
+                  <div class="small text-muted">Revenue</div>
+                  <div class="display-4 fw-bold my-2">$8.4k</div>
+                  <div class="small text-muted">This month</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-3">
+                <div class="card summary-card p-3 text-center">
+                  <div class="small text-muted">Clients</div>
+                  <div class="display-4 fw-bold my-2">342</div>
+                  <div class="small text-muted">Active</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Other page sections (hidden by default) -->
+            <div id="vehicles" class="page-section d-none">
+              <h3>Vehicles</h3>
+              <p class="text-muted">List of vehicles and quick stats.</p>
+              <div class="card p-3">
+                <p class="mb-0">(Vehicles list placeholder)</p>
+              </div>
+            </div>
+
+            <div id="finance" class="page-section d-none">
+              <h3>Finance</h3>
+              <p class="text-muted">Revenue summaries and invoices.</p>
+              <div class="card p-3">
+                <p class="mb-0">(Finance dashboard placeholder)</p>
+              </div>
+            </div>
+
+            <div id="clients" class="page-section d-none">
+              <h3>Clients / Staff</h3>
+              <p class="text-muted">Manage clients and staff members.</p>
+              <div class="card p-3">
+                <p class="mb-0">(Clients / Staff placeholder)</p>
+              </div>
+            </div>
+
+            <!-- Filters toolbar -->
+            <div class="filters mb-3">
+              <form class="row g-2 align-items-end">
+                <div class="col-12 col-sm-6 col-md-3">
+                  <label class="form-label small mb-1">Order by</label>
+                  <select class="form-select form-select-sm" aria-label="Order by">
+                    <option selected>Newest</option>
+                    <option>Oldest</option>
+                    <option>Value: High to Low</option>
+                    <option>Value: Low to High</option>
+                  </select>
+                </div>
+
+                <div class="col-6 col-sm-3 col-md-2">
+                  <label class="form-label small mb-1">Min value</label>
+                  <input type="number" step="0.01" class="form-control form-control-sm" placeholder="0" aria-label="Min value">
+                </div>
+                <div class="col-6 col-sm-3 col-md-2">
+                  <label class="form-label small mb-1">Max value</label>
+                  <input type="number" step="0.01" class="form-control form-control-sm" placeholder="9999" aria-label="Max value">
+                </div>
+
+                <div class="col-6 col-sm-4 col-md-2">
+                  <label class="form-label small mb-1">From</label>
+                  <input type="date" class="form-control form-control-sm" aria-label="From date">
+                </div>
+                <div class="col-6 col-sm-4 col-md-2">
+                  <label class="form-label small mb-1">To</label>
+                  <input type="date" class="form-control form-control-sm" aria-label="To date">
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-3">
+                  <label class="form-label small mb-1">Responsible</label>
+                  <select class="form-select form-select-sm" aria-label="Responsible">
+                    <option selected>All</option>
+                    <option>John Doe</option>
+                    <option>Jane Smith</option>
+                    <option>Michael</option>
+                  </select>
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-3 text-end">
+                  <button type="submit" class="btn btn-primary btn-sm me-2">Apply</button>
+                  <button type="reset" class="btn btn-outline-secondary btn-sm">Reset</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Data table styled for the page -->
+            <div class="table-responsive data-table small">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th scope="col" class="text-start">Order code</th>
+                    <th scope="col" class="text-start">Title</th>
+                    <th scope="col" class="text-start">Responsible</th>
+                    <th scope="col" class="d-none d-sm-table-cell text-start">Vehicle</th>
+                    <th scope="col" class="d-none d-sm-table-cell text-end">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="text-truncate align-middle">1,001</td>
+                    <td class="text-truncate align-middle">Oil change</td>
+                    <td class="text-truncate align-middle">John Doe</td>
+                    <td class="d-none d-sm-table-cell text-truncate align-middle">VW Golf</td>
+                    <td class="d-none d-sm-table-cell text-end text-truncate align-middle">$120.00</td>
+                  </tr>
+                  <tr>
+                    <td class="text-truncate align-middle">1,002</td>
+                    <td class="text-truncate align-middle">Brake pads</td>
+                    <td class="text-truncate align-middle">Jane Smith</td>
+                    <td class="d-none d-sm-table-cell text-truncate align-middle">Fiat Uno</td>
+                    <td class="d-none d-sm-table-cell text-end text-truncate align-middle">$220.00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Offcanvas sidebar for mobile -->
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+    <div
+      class="offcanvas offcanvas-start"
+      tabindex="-1"
+      id="mobileSidebar"
+      aria-labelledby="mobileSidebarLabel"
+    >
       <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="mobileSidebarLabel">Menu</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="offcanvas"
+          aria-label="Close"
+        ></button>
       </div>
       <div class="offcanvas-body d-flex flex-column p-0 px-3 pb-3">
         <ul class="nav nav-pills flex-column sidebar-nav">
           <li class="nav-item">
-            <a href="#" class="nav-link active">
+            <a href="#" class="nav-link active" data-target="service-orders">
               <i class="bi bi-wrench-adjustable"></i>
-              <span class="label" style="display:inline;">Service Orders</span>
+              <span class="label" style="display: inline">Service Orders</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="#" class="nav-link" data-target="vehicles">
               <i class="bi bi-car-front"></i>
-              <span class="label" style="display:inline;">Vehicles</span>
+              <span class="label" style="display: inline">Vehicles</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="#" class="nav-link" data-target="finance">
               <i class="bi bi-cash-coin"></i>
-              <span class="label" style="display:inline;">Finance</span>
+              <span class="label" style="display: inline">Finance</span>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="#" class="nav-link" data-target="clients">
               <i class="bi bi-people"></i>
-              <span class="label" style="display:inline;">Clients / Staff</span>
+              <span class="label" style="display: inline">Clients / Staff</span>
             </a>
           </li>
         </ul>
 
-        <a href="#" class="sidebar-user mt-auto" style="justify-content:flex-start;">
+        <a
+          href="#"
+          class="sidebar-user mt-auto"
+          style="justify-content: flex-start"
+        >
           <i class="bi bi-person-circle"></i>
           <div>
-            <div class="user-name" style="display:block;">Alex Pires</div>
-            <div class="user-role" style="display:block;">Admin</div>
+            <div class="user-name" style="display: block">Alex Pires</div>
+            <div class="user-role" style="display: block">Admin</div>
           </div>
         </a>
       </div>
@@ -162,10 +335,62 @@
           btn.setAttribute("aria-expanded", String(pinned));
           // swap inline SVG: list <-> x (close)
           if (pinned) {
-            btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>';
+            btn.innerHTML =
+              '<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>';
           } else {
-            btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M2.5 12.5a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/></svg>';
+            btn.innerHTML =
+              '<svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M2.5 12.5a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0-4a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/></svg>';
           }
+        });
+      })();
+
+      // Page navigation: show/hide sections based on sidebar/menu selection
+      (function () {
+        const links = document.querySelectorAll('.sidebar-nav .nav-link');
+        const sections = document.querySelectorAll('.page-section, #service-orders');
+        const offcanvasEl = document.getElementById('mobileSidebar');
+
+        function showSection(targetId) {
+          // hide all
+          sections.forEach((s) => {
+            if (s.id === targetId) {
+              s.classList.add('active');
+              s.classList.remove('d-none');
+            } else {
+              s.classList.remove('active');
+              s.classList.add('d-none');
+            }
+          });
+        }
+
+        function setActiveLink(clicked) {
+          links.forEach((l) => {
+            const same = l.getAttribute('data-target') === clicked.getAttribute('data-target');
+            if (same) l.classList.add('active'); else l.classList.remove('active');
+          });
+        }
+
+        links.forEach((link) => {
+          link.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            const target = link.getAttribute('data-target');
+            if (!target) return;
+            showSection(target);
+            setActiveLink(link);
+
+            // close mobile offcanvas if open
+            if (offcanvasEl) {
+              const bsOff = bootstrap.Offcanvas.getInstance(offcanvasEl);
+              if (bsOff) bsOff.hide();
+            }
+          });
+        });
+
+        // initialize view from active nav (or default to service-orders)
+        document.addEventListener('DOMContentLoaded', () => {
+          const active = document.querySelector('.sidebar-nav .nav-link.active');
+          const initial = (active && active.getAttribute('data-target')) || 'service-orders';
+          showSection(initial);
         });
       })();
     </script>

@@ -20,6 +20,11 @@ body {
   min-height: 100vh;
 }
 
+/* Ensure sidebar and content share the row and content doesn't flow under the sidebar */
+.app-wrapper { align-items: stretch; }
+
+.sidebar { align-self: stretch; min-height: 100vh; }
+
 /* ============ SIDEBAR (desktop, md+) ============ */
 .sidebar {
   width: var(--sidebar-collapsed); /* começa colapsada */
@@ -223,6 +228,109 @@ body {
 
 /* ============ CONTENT ============ */
 .content {
-  flex: 1;
+  flex: 1 1 auto;
   background-color: #fff;
+  padding: 2rem;
+  box-sizing: border-box;
+  min-height: 100vh; /* keep full height so you can build the page */
+}
+
+/* Summary cards grid */
+.summary-card {
+  border: none;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #222;
+  box-shadow: 0 8px 20px rgba(22, 28, 37, 0.06);
+}
+.summary-card .small { color: #6c757d; }
+.summary-card .display-4 { font-size: 2rem; }
+
+/* Data table styling */
+.data-table .table {
+  border-collapse: separate;
+  border-spacing: 0 0.6rem;
+  width: 100%;
+  table-layout: fixed; /* enable truncation and stable column widths */
+}
+.data-table thead th {
+  border-bottom: none;
+  color: #6c757d;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.data-table tbody tr {
+  background: #fff;
+  box-shadow: 0 6px 14px rgba(22, 28, 37, 0.04);
+  border-radius: 8px;
+}
+.data-table tbody td {
+  border-top: none;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+  .summary-card .display-4 { font-size: 1.6rem; }
+  /* Reduce table cell padding and allow cleaner truncation on very small screens */
+  .data-table td,
+  .data-table th {
+    padding: .38rem .5rem;
+  }
+  .filters .form-label { color: #6c757d; }
+  .filters .btn { width: 48%; }
+  .filters .text-end { text-align: left !important; }
+}
+
+.filters .form-label { font-weight: 600; color: #6c757d; }
+.filters .form-control-sm, .filters .form-select-sm { min-height: 34px; }
+
+/* Theme the filters to match the sidebar / page colors */
+.filters {
+  --accent: var(--sidebar-orange);
+  --accent-dark: #e55a08;
+}
+.filters .btn-primary {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.filters .btn-primary:hover,
+.filters .btn-primary:focus {
+  background-color: var(--accent-dark);
+  border-color: var(--accent-dark);
+  box-shadow: none;
+}
+.filters .btn-outline-secondary {
+  color: var(--sidebar-brown);
+  border-color: rgba(122,68,38,0.15);
+}
+.filters .btn-outline-secondary:hover {
+  background-color: rgba(122,68,38,0.04);
+}
+.filters .form-control,
+.filters .form-select {
+  border-radius: .5rem;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+}
+.filters .form-control:focus,
+.filters .form-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 .15rem rgba(243,113,31,0.12);
+  border-color: var(--accent);
+}
+  
+/* Page sections toggling */
+.page-section { display: none; }
+.page-section.active { display: block; }
+
+@media (max-width: 576px) {
+  .filters .text-end { text-align: left !important; }
+  .filters .btn { width: 48%; }
+  .filters .form-label { font-size: .78rem; }
 }
