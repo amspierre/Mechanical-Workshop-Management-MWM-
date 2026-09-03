@@ -1,0 +1,67 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Keep form layout, but remove full-viewport height so the card doesn't fill the screen */
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 420px;
+}
+
+/* Limit the outer nav/card width so it keeps a card-like proportion */
+#form {
+    width: min(520px, 90%);
+    background-color: #fff !important;
+    padding: 1.6rem 1.8rem;
+    border-radius: 12px;
+}
+
+/* Ensure the inner form fills the card and has breathing room */
+#form form {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Make input containers and buttons responsive inside the card */
+#form .mb-3 {
+    width: 100%;
+    max-width: 380px;
+    margin: 0.25rem auto;
+}
+
+#form .mb-3 .form-control {
+    width: 100%;
+}
+
+#form .btn {
+    width: 70%;
+    max-width: 320px;
+}
+
+/* Smaller screens: increase proportions and spacing */
+@media (max-width: 480px) {
+    #form {
+        width: 92%;
+        padding: 1rem;
+    }
+
+    #form .btn {
+        width: 90%;
+    }
+}

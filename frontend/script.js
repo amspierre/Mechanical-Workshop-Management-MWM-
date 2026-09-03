@@ -1,0 +1,1 @@
+// Script for handling login functionality
