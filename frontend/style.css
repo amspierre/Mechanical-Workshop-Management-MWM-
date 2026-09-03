@@ -65,3 +65,46 @@ form {
         width: 90%;
     }
 }
+
+/* Sidebar (fixed, expanded like the provided image) */
+/* Card wrapper that contains the sidebar stripe and main white panel */
+.card-wrapper {
+    width: min(1100px, 96%);
+    height: min(680px, 86vh);
+    background: #ffffff;
+    display: flex;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 220px;
+    background: #ff7926;
+    padding: 36px 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 26px;
+}
+
+.menu-list { list-style: none; padding: 0; margin: 0; display:flex; flex-direction:column; gap:18px; }
+.menu-item { display:flex; align-items:center; gap:14px; color: #fff; font-size:0.95rem; }
+.menu-item .icon { font-size:20px; width:28px; display:inline-flex; justify-content:center; }
+
+.sidebar-profile { margin-top: auto; display:flex; align-items:center; gap:10px; padding-bottom:18px; }
+.profile-icon { font-size:20px; color:#fff; }
+.profile-info { color:#fff; }
+.profile-info strong { display:block; font-size:0.9rem; }
+.profile-info .role { font-size:0.75rem; opacity:0.95; }
+
+.main-view { flex:1; background:#ffffff; }
+
+/* Match image spacing: place card centered in body */
+.app-shell { width:100%; padding:22px; display:flex; justify-content:center; align-items:flex-start; }
+
+@media (max-width: 720px) {
+    .card-wrapper { height: auto; flex-direction:column; }
+    .sidebar { width:100%; display:flex; flex-direction:row; gap:12px; padding:16px; }
+    .menu-list { flex-direction:row; gap:12px; }
+}

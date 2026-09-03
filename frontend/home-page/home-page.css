@@ -1,0 +1,228 @@
+:root {
+  --sidebar-orange: #f3711f;
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 76px;
+  --sidebar-brown: #7a4426;
+}
+
+* {
+  font-family: "Poppins", sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+.app-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ============ SIDEBAR (desktop, md+) ============ */
+.sidebar {
+  width: var(--sidebar-collapsed); /* começa colapsada */
+  flex-shrink: 0;
+  background-color: var(--sidebar-orange);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: width 0.25s ease;
+  position: relative;
+  z-index: 1030;
+}
+
+/* Expande no hover, a menos que esteja fixada (pinned) */
+.sidebar:not(.pinned):hover {
+  width: var(--sidebar-width);
+}
+
+/* Fixada (usuário clicou no toggle) fica sempre expandida */
+.sidebar.pinned {
+  width: var(--sidebar-width);
+}
+
+.sidebar-nav {
+  flex: 1;
+  margin-top: 1rem;
+}
+
+.sidebar-nav .nav-link {
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centralizado quando colapsada */
+  gap: 0.9rem;
+  padding: 0.85rem 0.5rem;
+  border-radius: 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  opacity: 0.95;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.sidebar:not(.pinned):hover .nav-link,
+.sidebar.pinned .nav-link {
+  justify-content: flex-start;
+}
+
+.sidebar-nav .nav-link i {
+  font-size: 1.2rem;
+  width: 1.4rem;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.sidebar-nav .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  opacity: 1;
+}
+
+.sidebar-nav .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.18);
+  opacity: 1;
+  font-weight: 600;
+}
+
+/* Override blue accents inside the sidebar to brown */
+.sidebar .nav-link:hover { /* subtle brown tint on hover */
+  background-color: rgba(122,68,38,0.10) !important;
+}
+.sidebar .nav-link.active { /* stronger brown for active */
+  background-color: rgba(122,68,38,0.16) !important;
+}
+.sidebar .nav-link:focus {
+  box-shadow: 0 0 0 0.2rem rgba(122,68,38,0.18);
+}
+.sidebar-toggle {
+  background: rgba(122,68,38,0.10);
+  color: #fff;
+}
+.sidebar-toggle:hover {
+  background: rgba(122,68,38,0.18);
+}
+#mobileSidebar .btn-close {
+  filter: invert(95%) sepia(40%) saturate(200%) hue-rotate(10deg) brightness(90%);
+}
+
+/* Labels e texto do usuário ficam ocultos por padrão (colapsada)... */
+.sidebar .label,
+.sidebar .sidebar-user .user-name,
+.sidebar .sidebar-user .user-role {
+  display: none;
+}
+
+/* ...e aparecem no hover ou quando fixada */
+.sidebar:not(.pinned):hover .label,
+.sidebar.pinned .label {
+  display: inline;
+}
+
+.sidebar:not(.pinned):hover .sidebar-user .user-name,
+.sidebar:not(.pinned):hover .sidebar-user .user-role,
+.sidebar.pinned .sidebar-user .user-name,
+.sidebar.pinned .sidebar-user .user-role {
+  display: block;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  padding-top: 1rem;
+  text-decoration: none;
+  color: #fff;
+}
+
+.sidebar:not(.pinned):hover .sidebar-user,
+.sidebar.pinned .sidebar-user {
+  justify-content: flex-start;
+}
+
+.sidebar-user i {
+  font-size: 2.1rem;
+  flex-shrink: 0;
+}
+
+.sidebar-user .user-name {
+  font-size: 0.85rem;
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+.sidebar-user .user-role {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Button to pin/unpin the sidebar (desktop) */
+.sidebar-toggle {
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  color: #fff;
+  border-radius: 0.4rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ============ TOPBAR (mobile only) ============ */
+.mobile-topbar {
+  background-color: var(--sidebar-orange);
+}
+
+.mobile-topbar .navbar-toggler {
+  border: none;
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.mobile-topbar .navbar-toggler:focus {
+  box-shadow: none;
+}
+
+.mobile-topbar .brand {
+  color: #fff;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* ============ OFFCANVAS SIDEBAR (mobile) ============ */
+#mobileSidebar {
+  width: 260px;
+  background-color: var(--sidebar-orange);
+  color: #fff;
+}
+
+#mobileSidebar .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+#mobileSidebar .sidebar-nav .nav-link,
+#mobileSidebar .sidebar-user {
+  color: #fff;
+}
+
+/* ============ CONTENT ============ */
+.content {
+  flex: 1;
+  background-color: #fff;
+}
