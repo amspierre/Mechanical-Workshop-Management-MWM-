@@ -22,12 +22,13 @@
   </head>
   <body>
     <nav id="form" class="shadow" style="background-color: red">
-      <form>
+      <form id="loginForm">
         <div class="mb-3 col-10 col-md-3">
           <input
             type="email"
             class="form-control"
             id="exampleInputEmail1"
+            name="email"
             aria-describedby="emailHelp"
             placeholder="Enter user"
           />
@@ -37,13 +38,14 @@
             type="password"
             class="form-control"
             id="exampleInputPassword1"
+            name="senha"
             placeholder="Enter password"
           />
         </div>
         <button class="btn btn-primary" type="submit">
           Submit
         </button>
-        <button class="btn btn-link rounded-pill px-3" type="button">
+        <button class="btn btn-link rounded-pill px-3" type="button" disabled>
           Create a new user as a admin
         </button>
       </form>
@@ -54,4 +56,5 @@
     integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
     crossorigin="anonymous"
   ></script>
+  <script src="script.js"></script>
 </html>

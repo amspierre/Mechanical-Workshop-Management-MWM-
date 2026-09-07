@@ -1,0 +1,200 @@
+const API_URL = window.MWM_API_URL || 'http://localhost:3000/api/v1';
+const TOKEN_KEY = 'mwm_access_token';
+let DB = { clientes: [], funcionarios: [], veiculos: [], ordens_servico: [] };
+
+async function apiFetch(path, options = {}) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const headers = { ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...(options.headers || {}) };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  if (response.status === 401) {
+    localStorage.removeItem(TOKEN_KEY);
+    window.location.href = '../login-page/login.html';
+    throw new Error('Session expired. Please log in again.');
+  }
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error?.message || 'Could not communicate with the API.');
+  }
+  return response.status === 204 ? null : response.json();
+}
+
+function showApiError(error) { console.error(error); window.alert(error.message || 'An error occurred while communicating with the API.'); }
+function getClient(id) { return DB.clientes.find(item => Number(item.id) === Number(id)) || null; }
+function getEmployee(id) { return DB.funcionarios.find(item => Number(item.id) === Number(id)) || null; }
+function getVehicle(id) { return DB.veiculos.find(item => Number(item.id) === Number(id)) || null; }
+function getOrder(id) { return DB.ordens_servico.find(item => Number(item.id) === Number(id)); }
+
+async function loadDB() {
+  const [clients, staff, vehicles, orders] = await Promise.all([
+    apiFetch('/clientes?limit=1000'), apiFetch('/funcionarios?limit=1000'),
+    apiFetch('/veiculos?limit=1000'), apiFetch('/ordens-servico?limit=1000&sort=data_inicio_desc')
+  ]);
+  DB = { clientes: clients.data || [], funcionarios: staff.data || [], veiculos: vehicles.data || [], ordens_servico: orders.data || [] };
+}
+
+async function loadDashboard() {
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+  return apiFetch(`/dashboard/resumo?de=${from}&ate=${to}`);
+}
+
+function entityLink(type, id, label) {
+  const link = document.createElement('a'); link.href = '#'; link.className = 'entity-link';
+  link.dataset.profileType = type; link.dataset.profileId = id; link.textContent = label; return link;
+}
+
+function renderVehicles() {
+  const container = document.getElementById('vehiclesList'); if (!container) return;
+  container.innerHTML = '';
+  if (!DB.veiculos.length) { container.innerHTML = '<div class="card p-3">No vehicles</div>'; return; }
+  const table = document.createElement('table'); table.className = 'table table-sm';
+  table.innerHTML = '<thead><tr><th>Plate</th><th>Model</th><th>Owner</th><th>Last visit</th></tr></thead>';
+  const body = document.createElement('tbody');
+  DB.veiculos.forEach(vehicle => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${vehicle.placa || '-'}</td><td>${vehicle.marca || ''} ${vehicle.modelo || ''}</td>`;
+    const ownerCell = document.createElement('td'); const owner = getClient(vehicle.cliente_id);
+    if (owner) ownerCell.appendChild(entityLink('client', owner.id, owner.nome)); else ownerCell.textContent = '-';
+    const visit = document.createElement('td'); visit.textContent = vehicle.ultima_visita || '-'; row.append(ownerCell, visit); body.appendChild(row);
+  });
+  table.appendChild(body); container.appendChild(table);
+}
+
+function renderClients() {
+  const container = document.getElementById('clientsList'); if (!container) return;
+  container.innerHTML = ''; if (!DB.clientes.length) { container.innerHTML = '<div class="card p-3">No clients</div>'; return; }
+  const list = document.createElement('div'); list.className = 'list-group';
+  DB.clientes.forEach(client => {
+    const item = document.createElement('div'); item.className = 'list-group-item';
+    const heading = document.createElement('div'); heading.className = 'd-flex w-100 justify-content-between';
+    const name = entityLink('client', client.id, client.nome); name.className += ' h6 mb-1';
+    const documentNumber = document.createElement('small'); documentNumber.textContent = client.cpf_cnpj || '-'; heading.append(name, documentNumber);
+    const contact = document.createElement('p'); contact.className = 'mb-1'; contact.textContent = `${client.email || '-'} | ${client.telefone || '-'}`;
+    const address = document.createElement('small'); address.textContent = client.endereco || '-'; item.append(heading, contact, address); list.appendChild(item);
+  });
+  container.appendChild(list);
+}
+
+function renderStaff() {
+  const container = document.getElementById('staffList'); if (!container) return;
+  container.innerHTML = ''; if (!DB.funcionarios.length) { container.innerHTML = '<div class="card p-3">No staff members</div>'; return; }
+  const list = document.createElement('div'); list.className = 'list-group';
+  DB.funcionarios.forEach(staff => {
+    const item = document.createElement('div'); item.className = 'list-group-item';
+    const heading = document.createElement('div'); heading.className = 'd-flex w-100 justify-content-between';
+    const name = entityLink('staff', staff.id, staff.nome); name.className += ' h6 mb-1';
+    const registration = document.createElement('small'); registration.textContent = staff.matricula || '-'; heading.append(name, registration);
+    const role = document.createElement('p'); role.className = 'mb-0'; role.textContent = staff.cargo || '-'; item.append(heading, role); list.appendChild(item);
+  });
+  container.appendChild(list);
+}
+
+function renderSummaries(summary) {
+  const cards = document.querySelectorAll('.summary-grid .display-4'); if (cards.length < 4) return;
+  cards[0].textContent = summary?.ordens_abertas ?? DB.ordens_servico.filter(order => order.status === 'em_andamento').length;
+  cards[1].textContent = summary?.veiculos_total ?? DB.veiculos.length;
+  cards[2].textContent = `$${Number(summary?.receita_periodo ?? 0).toFixed(2)}`;
+  cards[3].textContent = summary?.clientes_ativos ?? DB.clientes.length;
+}
+
+function renderOrdersTable(orders) {
+  const tbody = document.querySelector('.data-table tbody'); if (!tbody) return; tbody.innerHTML = '';
+  orders.forEach(order => {
+    const row = document.createElement('tr'); const employee = getEmployee(order.responsavel_id); const vehicle = getVehicle(order.veiculo_id);
+    const id = document.createElement('td'); id.className = 'text-truncate align-middle'; id.textContent = String(order.id).padStart(4, '0');
+    const title = document.createElement('td'); title.className = 'text-truncate align-middle'; title.textContent = order.titulo;
+    const responsible = document.createElement('td'); responsible.className = 'text-truncate align-middle'; if (employee) responsible.appendChild(entityLink('staff', employee.id, employee.nome)); else responsible.textContent = '-';
+    const vehicleCell = document.createElement('td'); vehicleCell.className = 'd-none d-sm-table-cell text-truncate align-middle'; if (vehicle) vehicleCell.appendChild(entityLink('vehicle', vehicle.id, `${vehicle.marca} ${vehicle.modelo}`)); else vehicleCell.textContent = '-';
+    const value = document.createElement('td'); value.className = 'd-none d-sm-table-cell text-end text-truncate align-middle'; value.textContent = order.valor ? `$${Number(order.valor).toFixed(2)}` : '-';
+    const actions = document.createElement('td'); actions.className = 'text-end'; actions.style.whiteSpace = 'nowrap';
+    const edit = document.createElement('button'); edit.className = 'btn btn-sm btn-outline-primary me-1'; edit.textContent = 'Edit'; edit.dataset.id = order.id;
+    const remove = document.createElement('button'); remove.className = 'btn btn-sm btn-outline-danger'; remove.textContent = 'Delete'; remove.dataset.id = order.id; actions.append(edit, remove);
+    row.append(id, title, responsible, vehicleCell, value, actions); tbody.appendChild(row);
+  });
+}
+
+function populateResponsibleFilter() {
+  const select = document.querySelector('select[aria-label="Responsible"]'); if (!select) return;
+  select.innerHTML = '<option value="All">All</option>'; DB.funcionarios.forEach(staff => select.appendChild(new Option(staff.nome, staff.id)));
+}
+
+async function filterOrders() {
+  const form = document.querySelector('.filters form'); const params = new URLSearchParams({ limit: '1000', sort: 'data_inicio_desc' });
+  const orderBy = form.querySelector('[aria-label="Order by"]').value.toLowerCase(); const responsible = form.querySelector('[aria-label="Responsible"]').value;
+  const from = form.querySelector('[aria-label="From date"]').value; const to = form.querySelector('[aria-label="To date"]').value;
+  const min = form.querySelector('[aria-label="Min value"]').value; const max = form.querySelector('[aria-label="Max value"]').value;
+  if (responsible !== 'All') params.set('responsavel_id', responsible); if (from) params.set('data_inicio_de', from); if (to) params.set('data_inicio_ate', to); if (min) params.set('valor_min', min); if (max) params.set('valor_max', max);
+  if (orderBy.includes('oldest')) params.set('sort', 'data_inicio_asc'); if (orderBy.includes('value')) params.set('sort', orderBy.includes('high') ? 'valor_desc' : 'valor_asc');
+  const result = await apiFetch(`/ordens-servico?${params}`); renderOrdersTable(result.data || []);
+}
+
+function openOrderModal(mode, order) {
+  const modal = document.getElementById('orderModal'); const form = modal.querySelector('form'); form.dataset.mode = mode; form.dataset.id = order?.id || '';
+  modal.querySelector('.modal-title').textContent = mode === 'edit' ? 'Edit Order' : 'New Order';
+  const clients = form.querySelector('[name="cliente_id"]'); const vehicles = form.querySelector('[name="veiculo_id"]'); const staff = form.querySelector('[name="responsavel_id"]');
+  clients.innerHTML = ''; vehicles.innerHTML = ''; staff.innerHTML = '';
+  DB.clientes.forEach(item => clients.appendChild(new Option(item.nome, item.id))); DB.veiculos.forEach(item => vehicles.appendChild(new Option(`${item.marca} ${item.modelo} (${item.placa})`, item.id))); DB.funcionarios.forEach(item => staff.appendChild(new Option(item.nome, item.id)));
+  form.reset();
+  if (order) { form.titulo.value = order.titulo || ''; clients.value = order.cliente_id || ''; vehicles.value = order.veiculo_id || ''; staff.value = order.responsavel_id || ''; form.status.value = order.status || 'em_andamento'; form.data_inicio.value = order.data_inicio ? order.data_inicio.substring(0, 16) : ''; form.observacao.value = order.observacao || ''; form.valor.value = order.valor || ''; }
+  new bootstrap.Modal(modal).show();
+}
+
+function openEntityModal(id) {
+  const modal = document.getElementById(id); const form = modal.querySelector('form'); form.reset();
+  if (id === 'vehicleModal') { const select = form.cliente_id; select.innerHTML = ''; DB.clientes.forEach(item => select.appendChild(new Option(item.nome, item.id))); }
+  new bootstrap.Modal(modal).show();
+}
+
+function showProfile(type, id) {
+  const record = { client: getClient(id), staff: getEmployee(id), vehicle: getVehicle(id) }[type]; if (!record) return;
+  document.querySelector('#profileModal .modal-title').textContent = { client: 'Client profile', staff: 'Staff profile', vehicle: 'Vehicle profile' }[type];
+  const content = document.getElementById('profileContent'); content.innerHTML = '';
+  const labels = { cpf_cnpj: 'Tax ID', telefone: 'Phone', endereco: 'Address', cliente_id: 'Owner ID', placa: 'Plate', marca: 'Make', modelo: 'Model', cor: 'Color', quilometragem: 'Mileage', ultima_visita: 'Last visit', carroceria: 'Body type', cargo: 'Role', matricula: 'Registration' };
+  Object.entries(record).forEach(([key, value]) => { if (key !== 'id') { const row = document.createElement('p'); row.className = 'mb-2'; row.textContent = `${labels[key] || key.replaceAll('_', ' ')}: ${value ?? '-'}`; content.appendChild(row); } });
+  new bootstrap.Modal(document.getElementById('profileModal')).show();
+}
+
+async function refreshData() { await loadDB(); const summary = await loadDashboard().catch(() => null); populateResponsibleFilter(); renderSummaries(summary); renderOrdersTable(DB.ordens_servico); renderVehicles(); renderClients(); renderStaff(); }
+
+async function saveEntityForm(form) {
+  if (form.closest('#clientModal')) return ['/clientes', { nome: form.nome.value.trim(), cpf_cnpj: form.cpf_cnpj.value.trim(), email: form.email.value.trim(), telefone: form.telefone.value.trim(), endereco: form.endereco.value.trim() }];
+  if (form.closest('#vehicleModal')) return ['/veiculos', { cliente_id: Number(form.cliente_id.value), placa: form.placa.value.trim(), marca: form.marca.value.trim(), modelo: form.modelo.value.trim(), cor: form.cor.value.trim(), quilometragem: Number(form.quilometragem.value) || 0, carroceria: form.carroceria.value.trim() }];
+  if (form.closest('#staffModal')) return ['/funcionarios', { nome: form.nome.value.trim(), cargo: form.cargo.value.trim(), matricula: form.matricula.value.trim() }];
+  return null;
+}
+
+document.addEventListener('click', async event => {
+  const target = event.target.closest?.('button, a'); if (!target) return;
+  try {
+    if (target.matches('.entity-link')) { event.preventDefault(); showProfile(target.dataset.profileType, Number(target.dataset.profileId)); return; }
+    if (target.id === 'btnAddOrder') return openOrderModal('create', null); if (target.id === 'btnAddClient') return openEntityModal('clientModal'); if (target.id === 'btnAddVehicle') return openEntityModal('vehicleModal'); if (target.id === 'btnAddStaff') return openEntityModal('staffModal');
+    if (target.matches('.btn-outline-primary')) { const order = getOrder(target.dataset.id); if (order) openOrderModal('edit', order); return; }
+    if (target.matches('.btn-outline-danger')) { if (!confirm(`Delete order #${target.dataset.id}?`)) return; await apiFetch(`/ordens-servico/${target.dataset.id}`, { method: 'DELETE' }); await refreshData(); }
+  } catch (error) { showApiError(error); }
+});
+
+document.addEventListener('submit', async event => {
+  const form = event.target; if (!form.closest) return;
+  try {
+    const entity = await saveEntityForm(form);
+    if (entity) { event.preventDefault(); await apiFetch(entity[0], { method: 'POST', body: JSON.stringify(entity[1]) }); bootstrap.Modal.getInstance(form.closest('.modal')).hide(); await refreshData(); return; }
+    if (!form.closest('#orderModal')) return;
+    event.preventDefault(); const data = { titulo: form.titulo.value.trim(), cliente_id: Number(form.cliente_id.value), veiculo_id: Number(form.veiculo_id.value), responsavel_id: Number(form.responsavel_id.value), status: form.status.value, data_inicio: form.data_inicio.value, observacao: form.observacao.value.trim(), valor: Number(form.valor.value) || 0 };
+    const id = form.dataset.id; await apiFetch(id ? `/ordens-servico/${id}` : '/ordens-servico', { method: id ? 'PATCH' : 'POST', body: JSON.stringify(data) }); bootstrap.Modal.getInstance(form.closest('.modal')).hide(); await refreshData();
+  } catch (error) { event.preventDefault(); showApiError(error); }
+});
+
+(function setupNavigation() {
+  const links = document.querySelectorAll('.sidebar-nav .nav-link'); const offcanvas = document.getElementById('mobileSidebar');
+  function showSection(target) { document.querySelectorAll('.page-section, #service-orders').forEach(section => { const active = section.id === target; section.classList.toggle('d-none', !active); section.classList.toggle('active', active); }); if (target === 'vehicles') renderVehicles(); if (target === 'clients') renderClients(); if (target === 'staff') renderStaff(); }
+  links.forEach(link => link.addEventListener('click', event => { event.preventDefault(); showSection(link.dataset.target); links.forEach(item => item.classList.toggle('active', item.dataset.target === link.dataset.target)); const instance = offcanvas && bootstrap.Offcanvas.getInstance(offcanvas); if (instance) instance.hide(); }));
+  const toggle = document.getElementById('sidebarToggle'); const sidebar = document.getElementById('sidebar'); if (toggle && sidebar) toggle.addEventListener('click', () => { const pinned = sidebar.classList.toggle('pinned'); toggle.setAttribute('aria-expanded', String(pinned)); });
+})();
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!localStorage.getItem(TOKEN_KEY)) { window.location.href = '../login-page/login.html'; return; }
+  const filters = document.querySelector('.filters form'); filters?.addEventListener('submit', event => { event.preventDefault(); filterOrders().catch(showApiError); }); filters?.addEventListener('reset', () => setTimeout(() => renderOrdersTable(DB.ordens_servico), 0));
+  try { await refreshData(); } catch (error) { showApiError(error); }
+});

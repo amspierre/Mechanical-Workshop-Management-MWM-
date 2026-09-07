@@ -27,7 +27,7 @@ body {
 
 /* ============ SIDEBAR (desktop, md+) ============ */
 .sidebar {
-  width: var(--sidebar-collapsed); /* começa colapsada */
+  width: var(--sidebar-collapsed); /* starts collapsed */
   flex-shrink: 0;
   background-color: var(--sidebar-orange);
   color: #fff;
@@ -41,12 +41,12 @@ body {
   z-index: 1030;
 }
 
-/* Expande no hover, a menos que esteja fixada (pinned) */
+/* Expands on hover unless pinned */
 .sidebar:not(.pinned):hover {
   width: var(--sidebar-width);
 }
 
-/* Fixada (usuário clicou no toggle) fica sempre expandida */
+/* Pinned state keeps the sidebar expanded */
 .sidebar.pinned {
   width: var(--sidebar-width);
 }
@@ -114,14 +114,14 @@ body {
   filter: invert(95%) sepia(40%) saturate(200%) hue-rotate(10deg) brightness(90%);
 }
 
-/* Labels e texto do usuário ficam ocultos por padrão (colapsada)... */
+/* Labels and user text are hidden by default (collapsed)... */
 .sidebar .label,
 .sidebar .sidebar-user .user-name,
 .sidebar .sidebar-user .user-role {
   display: none;
 }
 
-/* ...e aparecem no hover ou quando fixada */
+/* ...and appear on hover or when pinned */
 .sidebar:not(.pinned):hover .label,
 .sidebar.pinned .label {
   display: inline;
