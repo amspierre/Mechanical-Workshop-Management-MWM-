@@ -102,7 +102,7 @@ function renderSummaries(summary) {
 function renderOrdersTable(orders) {
   const tbody = document.querySelector('.data-table tbody'); if (!tbody) return; tbody.innerHTML = '';
   orders.forEach(order => {
-    const row = document.createElement('tr'); const employee = getEmployee(order.responsavel_id); const vehicle = getVehicle(order.veiculo_id);
+    const row = document.createElement('tr'); row.className = 'order-row'; row.dataset.orderId = order.id; const employee = getEmployee(order.responsavel_id); const vehicle = getVehicle(order.veiculo_id);
     const id = document.createElement('td'); id.className = 'text-truncate align-middle'; id.textContent = String(order.id).padStart(4, '0');
     const title = document.createElement('td'); title.className = 'text-truncate align-middle'; title.textContent = order.titulo;
     const responsible = document.createElement('td'); responsible.className = 'text-truncate align-middle'; if (employee) responsible.appendChild(entityLink('staff', employee.id, employee.nome)); else responsible.textContent = '-';
@@ -130,6 +130,24 @@ async function filterOrders() {
   const result = await apiFetch(`/ordens-servico?${params}`); renderOrdersTable(result.data || []);
 }
 
+function syncStatusButtons(form) {
+  const statusValue = form.status.value || 'em_andamento';
+  const buttons = form.querySelectorAll('.status-chip');
+  buttons.forEach(button => button.classList.toggle('active', button.dataset.status === statusValue));
+
+  const endBlock = form.closest('#orderModal').querySelector('.timeline-fim-block');
+  const endInputs = endBlock ? endBlock.querySelectorAll('input') : [];
+  const shouldEnableEnd = statusValue === 'finalizado';
+  endInputs.forEach(input => {
+    input.disabled = !shouldEnableEnd;
+    input.toggleAttribute('readonly', !shouldEnableEnd);
+  });
+
+  if (endBlock) {
+    endBlock.classList.toggle('is-disabled', !shouldEnableEnd);
+  }
+}
+
 function openOrderModal(mode, order) {
   const modal = document.getElementById('orderModal'); const form = modal.querySelector('form'); form.dataset.mode = mode; form.dataset.id = order?.id || '';
   modal.querySelector('.modal-title').textContent = mode === 'edit' ? 'Edit Order' : 'New Order';
@@ -137,7 +155,38 @@ function openOrderModal(mode, order) {
   clients.innerHTML = ''; vehicles.innerHTML = ''; staff.innerHTML = '';
   DB.clientes.forEach(item => clients.appendChild(new Option(item.nome, item.id))); DB.veiculos.forEach(item => vehicles.appendChild(new Option(`${item.marca} ${item.modelo} (${item.placa})`, item.id))); DB.funcionarios.forEach(item => staff.appendChild(new Option(item.nome, item.id)));
   form.reset();
-  if (order) { form.titulo.value = order.titulo || ''; clients.value = order.cliente_id || ''; vehicles.value = order.veiculo_id || ''; staff.value = order.responsavel_id || ''; form.status.value = order.status || 'em_andamento'; form.data_inicio.value = order.data_inicio ? order.data_inicio.substring(0, 16) : ''; form.observacao.value = order.observacao || ''; form.valor.value = order.valor || ''; }
+
+  if (order) {
+    form.titulo.value = order.titulo || '';
+    clients.value = order.cliente_id || '';
+    vehicles.value = order.veiculo_id || '';
+    staff.value = order.responsavel_id || '';
+    form.status.value = order.status || 'em_andamento';
+    form.data_inicio.value = order.data_inicio ? order.data_inicio.substring(0, 16) : '';
+    form.observacao.value = order.observacao || '';
+    form.valor.value = order.valor || '';
+
+    const startValue = typeof order.data_inicio === 'string' ? order.data_inicio : '';
+    if (startValue) {
+      const start = new Date(startValue);
+      if (!Number.isNaN(start.getTime())) {
+        const date = start.toISOString().slice(0, 10);
+        const time = start.toTimeString().slice(0, 5);
+        form.data_inicio_date.value = date;
+        form.data_inicio_time.value = time;
+      }
+    }
+
+    if (order.data_fim) {
+      const end = new Date(order.data_fim);
+      if (!Number.isNaN(end.getTime())) {
+        form.data_fim_date.value = end.toISOString().slice(0, 10);
+        form.data_fim_time.value = end.toTimeString().slice(0, 5);
+      }
+    }
+  }
+
+  syncStatusButtons(form);
   new bootstrap.Modal(modal).show();
 }
 
@@ -166,12 +215,41 @@ async function saveEntityForm(form) {
 }
 
 document.addEventListener('click', async event => {
-  const target = event.target.closest?.('button, a'); if (!target) return;
+  const statusChip = event.target.closest?.('.status-chip');
+  if (statusChip) {
+    const form = statusChip.closest('#orderModal')?.querySelector('form');
+    if (form) {
+      form.status.value = statusChip.dataset.status;
+      if (statusChip.dataset.status === 'finalizado') {
+        const today = new Date();
+        const dateValue = today.toISOString().slice(0, 10);
+        const timeValue = today.toTimeString().slice(0, 5);
+        form.data_fim_date.value = form.data_fim_date.value || dateValue;
+        form.data_fim_time.value = form.data_fim_time.value || timeValue;
+      }
+      syncStatusButtons(form);
+    }
+    return;
+  }
+
+  const buttonOrLink = event.target.closest?.('button, a');
+  const row = event.target.closest?.('.order-row');
+
+  if (row && !event.target.closest('button')) {
+    const order = getOrder(row.dataset.orderId);
+    if (order) {
+      event.preventDefault();
+      openOrderModal('edit', order);
+      return;
+    }
+  }
+
+  if (!buttonOrLink) return;
   try {
-    if (target.matches('.entity-link')) { event.preventDefault(); showProfile(target.dataset.profileType, Number(target.dataset.profileId)); return; }
-    if (target.id === 'btnAddOrder') return openOrderModal('create', null); if (target.id === 'btnAddClient') return openEntityModal('clientModal'); if (target.id === 'btnAddVehicle') return openEntityModal('vehicleModal'); if (target.id === 'btnAddStaff') return openEntityModal('staffModal');
-    if (target.matches('.btn-outline-primary')) { const order = getOrder(target.dataset.id); if (order) openOrderModal('edit', order); return; }
-    if (target.matches('.btn-outline-danger')) { if (!confirm(`Delete order #${target.dataset.id}?`)) return; await apiFetch(`/ordens-servico/${target.dataset.id}`, { method: 'DELETE' }); await refreshData(); }
+    if (buttonOrLink.matches('.entity-link')) { event.preventDefault(); showProfile(buttonOrLink.dataset.profileType, Number(buttonOrLink.dataset.profileId)); return; }
+    if (buttonOrLink.id === 'btnAddOrder') return openOrderModal('create', null); if (buttonOrLink.id === 'btnAddClient') return openEntityModal('clientModal'); if (buttonOrLink.id === 'btnAddVehicle') return openEntityModal('vehicleModal'); if (buttonOrLink.id === 'btnAddStaff') return openEntityModal('staffModal');
+    if (buttonOrLink.matches('.btn-outline-primary')) { const order = getOrder(buttonOrLink.dataset.id); if (order) openOrderModal('edit', order); return; }
+    if (buttonOrLink.matches('.btn-outline-danger')) { if (!confirm(`Delete order #${buttonOrLink.dataset.id}?`)) return; await apiFetch(`/ordens-servico/${buttonOrLink.dataset.id}`, { method: 'DELETE' }); await refreshData(); }
   } catch (error) { showApiError(error); }
 });
 
