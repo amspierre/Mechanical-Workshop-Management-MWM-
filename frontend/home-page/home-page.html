@@ -448,8 +448,16 @@
         <form><div class="modal-body"><div class="row g-2">
           <div class="col-md-6"><label class="form-label">Owner</label><select name="cliente_id" class="form-select" required></select></div>
           <div class="col-md-6"><label class="form-label">Plate</label><input name="placa" class="form-control" required></div>
-          <div class="col-md-6"><label class="form-label">Make</label><input name="marca" class="form-control" required></div>
-          <div class="col-md-6"><label class="form-label">Model</label><input name="modelo" class="form-control" required></div>
+          <div class="col-md-6"><label class="form-label">Brand</label><select name="marca" class="form-select" required></select></div>
+          <div class="col-md-6"><label class="form-label">Model</label><select name="modelo" class="form-select" required></select></div>
+          <div class="col-md-6">
+            <label class="form-label">Brand not listed?</label>
+            <input name="marca_manual" class="form-control" placeholder="Type a brand" autocomplete="off">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Model not listed?</label>
+            <input name="modelo_manual" class="form-control" placeholder="Type a model" autocomplete="off">
+          </div>
           <div class="col-md-4"><label class="form-label">Color</label><input name="cor" class="form-control"></div>
           <div class="col-md-4"><label class="form-label">Mileage</label><input name="quilometragem" type="number" class="form-control"></div>
           <div class="col-md-4"><label class="form-label">Body</label><input name="carroceria" class="form-control"></div>

@@ -1,6 +1,9 @@
 const API_URL = window.MWM_API_URL || 'http://localhost:3000/api/v1';
 const TOKEN_KEY = 'mwm_access_token';
+const NHTSA_API_URL = 'https://vpic.nhtsa.dot.gov/api/vehicles';
+const ALLBRANDS_API_URL = 'https://allbrands.com.br/api/veiculos';
 let DB = { clientes: [], funcionarios: [], veiculos: [], ordens_servico: [] };
+let VEHICLE_CATALOG = { marcas: [] };
 
 async function apiFetch(path, options = {}) {
   const token = localStorage.getItem(TOKEN_KEY);
@@ -45,21 +48,155 @@ function entityLink(type, id, label) {
   link.dataset.profileType = type; link.dataset.profileId = id; link.textContent = label; return link;
 }
 
-function renderVehicles() {
+async function loadVehicleCatalog() {
+  try {
+    const response = await fetch(`${NHTSA_API_URL}/GetAllMakes?format=json`, { headers: { Accept: 'application/json' } });
+    if (!response.ok) throw new Error('NHTSA unavailable');
+    const payload = await response.json();
+    const brands = Array.isArray(payload.Results) ? payload.Results : [];
+    VEHICLE_CATALOG = {
+      marcas: brands
+        .map(brand => ({
+          codigo: String(brand.Make_ID || brand.make_id || ''),
+          marca: String(brand.Make_Name || brand.make_name || '').trim(),
+          modelos: []
+        }))
+        .filter(brand => brand.marca)
+    };
+  } catch (error) {
+    VEHICLE_CATALOG = { marcas: [] };
+  }
+}
+
+function getCatalogVehicleOptions() {
+  return VEHICLE_CATALOG?.marcas || [];
+}
+
+function getCatalogBrandByName(marca) {
+  const brands = getCatalogVehicleOptions();
+  if (!marca) return null;
+  return brands.find(item => String(item.marca || '').toLowerCase() === String(marca).trim().toLowerCase()) || null;
+}
+
+function normalizeThumbPayload(payload) {
+  if (!payload) return '';
+
+  if (Array.isArray(payload)) {
+    const item = payload[0] || {};
+    return item.thumb || item.thumbnail || item.imagem || item.image || item.logo || item.url || '';
+  }
+
+  if (Array.isArray(payload.data)) {
+    const item = payload.data[0] || {};
+    return item.thumb || item.thumbnail || item.imagem || item.image || item.logo || item.url || '';
+  }
+
+  if (payload.data && typeof payload.data === 'object') {
+    const item = payload.data;
+    return item.thumb || item.thumbnail || item.imagem || item.image || item.logo || item.url || '';
+  }
+
+  if (payload.results && Array.isArray(payload.results)) {
+    const item = payload.results[0] || {};
+    return item.thumb || item.thumbnail || item.imagem || item.image || item.logo || item.url || '';
+  }
+
+  return payload.thumb || payload.thumbnail || payload.imagem || payload.image || payload.logo || payload.url || '';
+}
+
+async function fetchAllBrandsThumb(marca, modelo) {
+  try {
+    const params = new URLSearchParams();
+    params.set('marca', String(marca || '').trim());
+    params.set('modelo', String(modelo || '').trim());
+
+    const response = await fetch(`${ALLBRANDS_API_URL}?${params.toString()}`, {
+      headers: { Accept: 'application/json' },
+      mode: 'cors'
+    });
+
+    if (!response.ok) return '';
+    const payload = await response.json().catch(() => ({}));
+    const thumb = normalizeThumbPayload(payload);
+    return thumb;
+  } catch (error) {
+    return '';
+  }
+}
+
+function vehicleCardFallbackImage(vehicle) {
+  return `<div class="vehicle-image-fallback"><i class="bi bi-car-front"></i></div>`;
+}
+
+async function renderVehicles() {
   const container = document.getElementById('vehiclesList'); if (!container) return;
   container.innerHTML = '';
   if (!DB.veiculos.length) { container.innerHTML = '<div class="card p-3">No vehicles</div>'; return; }
-  const table = document.createElement('table'); table.className = 'table table-sm';
-  table.innerHTML = '<thead><tr><th>Plate</th><th>Model</th><th>Owner</th><th>Last visit</th></tr></thead>';
-  const body = document.createElement('tbody');
-  DB.veiculos.forEach(vehicle => {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${vehicle.placa || '-'}</td><td>${vehicle.marca || ''} ${vehicle.modelo || ''}</td>`;
-    const ownerCell = document.createElement('td'); const owner = getClient(vehicle.cliente_id);
-    if (owner) ownerCell.appendChild(entityLink('client', owner.id, owner.nome)); else ownerCell.textContent = '-';
-    const visit = document.createElement('td'); visit.textContent = vehicle.ultima_visita || '-'; row.append(ownerCell, visit); body.appendChild(row);
+
+  const grid = document.createElement('div');
+  grid.className = 'vehicles-grid';
+
+  const promises = DB.veiculos.map(async vehicle => {
+    const card = document.createElement('article');
+    card.className = 'vehicle-card';
+
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'vehicle-card-image';
+
+    const img = document.createElement('img');
+    img.alt = `${vehicle.marca || ''} ${vehicle.modelo || ''}`;
+
+    const allBrandsThumb = await fetchAllBrandsThumb(vehicle.marca, vehicle.modelo);
+    const imageUrl = vehicle.thumbnail_url || vehicle.imagem || vehicle.image_url || allBrandsThumb || '';
+    img.src = imageUrl;
+
+    img.onerror = () => {
+      if (img.parentNode) {
+        img.parentNode.innerHTML = vehicleCardFallbackImage(vehicle);
+      }
+    };
+
+    if (imageUrl) {
+      imgWrap.appendChild(img);
+    } else {
+      imgWrap.innerHTML = vehicleCardFallbackImage(vehicle);
+    }
+
+    const body = document.createElement('div');
+    body.className = 'vehicle-card-body';
+
+    const titleRow = document.createElement('div');
+    titleRow.className = 'vehicle-card-title';
+
+    const title = document.createElement('strong');
+    title.textContent = `${vehicle.marca || 'Unknown'} ${vehicle.modelo || ''}`;
+
+    const plate = document.createElement('span');
+    plate.className = 'vehicle-card-plate';
+    plate.textContent = vehicle.placa || 'No plate';
+
+    titleRow.append(title, plate);
+
+    const model = document.createElement('div');
+    model.className = 'vehicle-card-model';
+    model.textContent = `${vehicle.cor || 'Vehicle'} · ${vehicle.carroceria || 'Body'} · ${vehicle.quilometragem ?? 0} km`;
+
+    const ownerLine = document.createElement('div');
+    ownerLine.className = 'vehicle-card-client';
+    const owner = getClient(vehicle.cliente_id);
+    if (owner) {
+      ownerLine.innerHTML = `<span class="owner-label">Owner:</span> ${entityLink('client', owner.id, owner.nome).outerHTML}`;
+    } else {
+      ownerLine.textContent = 'Owner: -';
+    }
+
+    body.append(titleRow, model, ownerLine);
+    card.append(imgWrap, body);
+    grid.appendChild(card);
   });
-  table.appendChild(body); container.appendChild(table);
+
+  await Promise.all(promises);
+  container.appendChild(grid);
 }
 
 function renderClients() {
@@ -190,9 +327,65 @@ function openOrderModal(mode, order) {
   new bootstrap.Modal(modal).show();
 }
 
+function populateVehicleMakeModelInputs(form) {
+  const makeSelect = form.marca;
+  const modelSelect = form.modelo;
+  const makeManual = form.marca_manual;
+  const modelManual = form.modelo_manual;
+
+  makeSelect.innerHTML = '<option value="">Choose a brand</option>';
+  modelSelect.innerHTML = '<option value="">Choose a model</option>';
+
+  const brands = getCatalogVehicleOptions();
+  brands.forEach(brand => {
+    makeSelect.appendChild(new Option(brand.marca, brand.marca));
+  });
+
+  makeSelect.addEventListener('change', async () => {
+    const selectedBrand = makeSelect.value;
+    modelSelect.innerHTML = '<option value="">Choose a model</option>';
+
+    if (!selectedBrand) {
+      modelSelect.innerHTML = '<option value="">No model available</option>';
+      return;
+    }
+
+    try {
+      const response = await fetch(`${NHTSA_API_URL}/GetModelsForMake/${encodeURIComponent(selectedBrand)}?format=json`, {
+        headers: { Accept: 'application/json' }
+      });
+      if (!response.ok) throw new Error('Model list unavailable');
+      const payload = await response.json();
+      const options = Array.isArray(payload.Results) ? payload.Results : [];
+      if (options.length) {
+        options.forEach(model => {
+          modelSelect.appendChild(new Option(model.Model_Name, model.Model_Name));
+        });
+      } else {
+        modelSelect.innerHTML = '<option value="">No model available</option>';
+      }
+    } catch (error) {
+      modelSelect.innerHTML = '<option value="">No model available</option>';
+    }
+  });
+
+  const fallbackMode = () => {
+    makeSelect.disabled = !!makeManual.value.trim();
+    modelSelect.disabled = !!modelManual.value.trim();
+  };
+
+  makeManual.addEventListener('input', fallbackMode);
+  modelManual.addEventListener('input', fallbackMode);
+}
+
 function openEntityModal(id) {
   const modal = document.getElementById(id); const form = modal.querySelector('form'); form.reset();
-  if (id === 'vehicleModal') { const select = form.cliente_id; select.innerHTML = ''; DB.clientes.forEach(item => select.appendChild(new Option(item.nome, item.id))); }
+  if (id === 'vehicleModal') {
+    const select = form.cliente_id;
+    select.innerHTML = '';
+    DB.clientes.forEach(item => select.appendChild(new Option(item.nome, item.id)));
+    populateVehicleMakeModelInputs(form);
+  }
   new bootstrap.Modal(modal).show();
 }
 
@@ -205,11 +398,35 @@ function showProfile(type, id) {
   new bootstrap.Modal(document.getElementById('profileModal')).show();
 }
 
-async function refreshData() { await loadDB(); const summary = await loadDashboard().catch(() => null); populateResponsibleFilter(); renderSummaries(summary); renderOrdersTable(DB.ordens_servico); renderVehicles(); renderClients(); renderStaff(); }
+async function refreshData() {
+  await loadDB();
+  await loadVehicleCatalog();
+  const summary = await loadDashboard().catch(() => null);
+  populateResponsibleFilter();
+  renderSummaries(summary);
+  renderOrdersTable(DB.ordens_servico);
+  renderVehicles();
+  renderClients();
+  renderStaff();
+}
 
 async function saveEntityForm(form) {
   if (form.closest('#clientModal')) return ['/clientes', { nome: form.nome.value.trim(), cpf_cnpj: form.cpf_cnpj.value.trim(), email: form.email.value.trim(), telefone: form.telefone.value.trim(), endereco: form.endereco.value.trim() }];
-  if (form.closest('#vehicleModal')) return ['/veiculos', { cliente_id: Number(form.cliente_id.value), placa: form.placa.value.trim(), marca: form.marca.value.trim(), modelo: form.modelo.value.trim(), cor: form.cor.value.trim(), quilometragem: Number(form.quilometragem.value) || 0, carroceria: form.carroceria.value.trim() }];
+  if (form.closest('#vehicleModal')) {
+    const finalBrand = (form.marca_manual && form.marca_manual.value.trim()) || form.marca.value.trim();
+    const finalModel = (form.modelo_manual && form.modelo_manual.value.trim()) || form.modelo.value.trim();
+    return ['/veiculos', {
+      cliente_id: Number(form.cliente_id.value),
+      placa: form.placa.value.trim(),
+      marca: finalBrand,
+      modelo: finalModel,
+      cor: form.cor.value.trim(),
+      quilometragem: Number(form.quilometragem.value) || 0,
+      carroceria: form.carroceria.value.trim(),
+      thumbnail_url: '',
+      imagem: ''
+    }];
+  }
   if (form.closest('#staffModal')) return ['/funcionarios', { nome: form.nome.value.trim(), cargo: form.cargo.value.trim(), matricula: form.matricula.value.trim() }];
   return null;
 }
