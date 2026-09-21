@@ -1,7 +1,7 @@
 const API_URL = window.MWM_API_URL || 'http://localhost:3000/api/v1';
 const TOKEN_KEY = 'mwm_access_token';
 const NHTSA_API_URL = 'https://vpic.nhtsa.dot.gov/api/vehicles';
-const ALLBRANDS_API_URL = 'https://allbrands.com.br/api/veiculos';
+const ALLBRANDS_API_URL = 'https://dobbygl.github.io/allbrands-api/v1/images';
 let DB = { clientes: [], funcionarios: [], veiculos: [], ordens_servico: [] };
 let VEHICLE_CATALOG = { marcas: [] };
 
@@ -106,19 +106,17 @@ function normalizeThumbPayload(payload) {
 
 async function fetchAllBrandsThumb(marca, modelo) {
   try {
-    const params = new URLSearchParams();
-    params.set('marca', String(marca || '').trim());
-    params.set('modelo', String(modelo || '').trim());
+    const brand = encodeURIComponent(String(marca || '').trim().toLowerCase());
+    const model = encodeURIComponent(String(modelo || '').trim().toLowerCase());
+    if (!brand || !model) return '';
 
-    const response = await fetch(`${ALLBRANDS_API_URL}?${params.toString()}`, {
+    const response = await fetch(`${ALLBRANDS_API_URL}/${brand}/${model}/medium.webp`, {
       headers: { Accept: 'application/json' },
       mode: 'cors'
     });
 
     if (!response.ok) return '';
-    const payload = await response.json().catch(() => ({}));
-    const thumb = normalizeThumbPayload(payload);
-    return thumb;
+    return response.url;
   } catch (error) {
     return '';
   }
